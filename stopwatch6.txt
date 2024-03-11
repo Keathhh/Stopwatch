@@ -1,0 +1,50 @@
+      MOV R0, #0        ; hours
+      MOV R1, #0        ; minutes
+      MOV R3, #0        ; pause flag (0 means not paused, 1 means paused)
+check_pause:
+      LDR R11, .LastKey
+      CMP R11, #80      ; Check if 'P' key is pressed (ASCII code 80)
+      BEQ pause_resume  ; Branch to pause_resume if 'P' key is pressed
+      B loop            ; Continue if 'P' key is not pressed
+pause_resume:
+      CMP R3, #0        ; Check if the program is paused
+      BEQ pause         ; Branch to pause if not paused
+      MOV R3, #0        ; Set pause flag to 0 (resume)
+      MOV R11, #0       ; Reset LastKey value to 0
+      B loop            ; Branch back to loop label to continue the program
+pause:
+      MOV R3, #1        ; Set pause flag to 1 (pause)
+      B loop            ; Branch back to loop label to continue checking for 'P' key
+loop:
+      CMP R3, #0        ; Check if the program is paused
+      BEQ continue_loop ; Branch to continue_loop if not paused
+      B check_pause     ; Branch to check_pause if paused
+continue_loop:
+      MOV R2, R0
+      STR R2, .WriteUnsignedNum ; Display hours
+      MOV R2, #msg2
+      STR R2, .WriteString ; Display colon separator
+      MOV R2, R1
+      STR R2, .WriteUnsignedNum ; Display minutes
+      MOV R2, #msg1
+      STR R2, .WriteString ; Display "Second" message
+      MOV R3, #1000000
+delay:
+      SUBS R3, R3, #1
+      LDR R11, .LastKey ; Check for key press while delaying
+      CMP R11, #80      ; Check if 'P' key is pressed (ASCII code 80)
+      BEQ pause_resume  ; Branch to pause_resume if 'P' key is pressed
+      CMP R3, #0        ; Check if delay is completed
+      BNE delay         ; Branch back to delay label if delay is not completed
+      ADD R1, R1, #1    ; Increment minutes
+      CMP R1, #60       ; Check if minutes exceed 60
+      BNE check_pause   ; Branch to check_pause if minutes are not equal to 60
+increment_hours:
+      ADD R0, R0, #1    ; Increment hours
+      MOV R1, #0        ; Reset minutes
+      CMP R0, #24       ; Check if hours exceed 24
+      BNE loop
+      HALT
+LastKey: .WORD 0
+msg1: .ASCIZ " \n"
+msg2: .ASCIZ ":"
